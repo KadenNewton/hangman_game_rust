@@ -1,11 +1,16 @@
-use rand::{thread_rng, seq::IteratorRandom};
-use std::{io, fs::File, io::{BufRead, BufReader}, process::Command};
+use rand::{seq::IteratorRandom, thread_rng};
+use std::{
+    fs::File,
+    io,
+    io::{BufRead, BufReader},
+    process::Command,
+};
 
 struct GameData {
     secret_word: String,
     discovered_letters: String,
     lives: i32,
-    status: String
+    status: String,
 }
 
 enum UserInputStatus {
@@ -21,9 +26,8 @@ fn main() {
         secret_word: random_word,
         discovered_letters: String::new(),
         lives: 5,
-        status: String::new()
+        status: String::new(),
     };
-    
     let mut secret_word_masked = format_masked_string(&gd.secret_word, &gd.discovered_letters);
 
     // Main game loop
@@ -41,7 +45,8 @@ fn main() {
                     gd.discovered_letters.push(guess_lower);
                     let status = format!("You discovered {}", guess_lower);
                     gd.status = status;
-                    secret_word_masked = format_masked_string(&gd.secret_word, &gd.discovered_letters);
+                    secret_word_masked =
+                        format_masked_string(&gd.secret_word, &gd.discovered_letters);
 
                     if !secret_word_masked.contains('_') {
                         gd.status = "You won!".to_string();
@@ -52,17 +57,16 @@ fn main() {
 
                 UserInputStatus::LetterMissed => {
                     gd.discovered_letters.push(guess_lower);
-                    gd.lives = gd.lives - 1;
+                    gd.lives -= 1;
 
                     if gd.lives == 0 {
                         gd.status = "You lost!".to_string();
                         secret_word_masked = format_masked_string(&gd.secret_word, &gd.secret_word);
                         update_screen(&gd, &secret_word_masked);
-                        print!("\n");
+                        println!();
                         let _ = Command::new("cmd.exe").arg("/c").arg("pause").status();
                         main();
-                    }
-                    else {
+                    } else {
                         let status = format!("Unfortunately, no {}", guess_lower);
                         gd.status = status;
                     }
@@ -73,9 +77,8 @@ fn main() {
                     gd.status = status;
                 }
             }
-
         } else {
-            let status = format!("It is not a letter!");
+            let status = "It is not a letter!".to_string();
             gd.status = status;
         }
     }
@@ -91,13 +94,11 @@ fn get_random_word() -> String {
     lines.choose(&mut thread_rng()).expect("File had no lines")
 }
 
-fn format_masked_string(input: &String, mask: &String) -> String {
+fn format_masked_string(input: &str, mask: &str) -> String {
     let mut result: String = String::new();
 
     for (_, c) in input.chars().enumerate() {
-        result.push(if c == ' ' {c}
-            else if mask.contains(c) {c}
-            else {'_'});
+        result.push(if c == ' ' || mask.contains(c) { c } else { '_' });
         result.push(' ');
     }
     result
@@ -105,18 +106,23 @@ fn format_masked_string(input: &String, mask: &String) -> String {
 
 fn read_guess() -> Option<char> {
     let mut guess = String::new();
-    io::stdin().read_line(&mut guess).expect("Failed to read line");
-    guess.trim().chars().nth(0)
+    io::stdin()
+        .read_line(&mut guess)
+        .expect("Failed to read line");
+    guess.trim().chars().next()
 }
 
 fn validate_user_guess(user_guess: Option<char>) -> bool {
     match user_guess {
         Some(guess) => {
-            if !guess.is_alphabetic() { false }
-            else { true }
+            if !guess.is_alphabetic() {
+                false
+            } else {
+                true
+            }
         }
 
-        None => { return false; }
+        None => false,
     }
 }
 
@@ -135,18 +141,18 @@ fn check_user_guess(gd: &GameData, user_guess: char) -> UserInputStatus {
 fn update_screen(gd: &GameData, secret_word: &String) {
     clear();
     println!("HANGMAN: CAN YOU GUESS THE WORD?");
-    println!("Lives: {}. Discovered letters: {}", gd.lives, gd.discovered_letters);
-    print_hangman(&gd);
+    println!(
+        "Lives: {}. Discovered letters: {}",
+        gd.lives, gd.discovered_letters
+    );
+    print_hangman(gd);
     println!("{}", secret_word);
     println!("{}", gd.status);
 }
 
-fn print_hangman(gd: &GameData)
-{
-    match gd.lives
-    {
-        0 =>
-        {
+fn print_hangman(gd: &GameData) {
+    match gd.lives {
+        0 => {
             println!(" _________   ");
             println!("|         |  ");
             println!("|         XO ");
@@ -156,8 +162,7 @@ fn print_hangman(gd: &GameData)
             println!("|            ");
         }
 
-        1 =>
-        {
+        1 => {
             println!(" _________   ");
             println!("|         |  ");
             println!("|         O  ");
@@ -167,8 +172,7 @@ fn print_hangman(gd: &GameData)
             println!("|        ||| ");
         }
 
-        2 =>
-        {
+        2 => {
             println!(" _________   ");
             println!("|            ");
             println!("|         O  ");
@@ -178,8 +182,7 @@ fn print_hangman(gd: &GameData)
             println!("|        ||| ");
         }
 
-        3 =>
-        {
+        3 => {
             println!(" _________   ");
             println!("|            ");
             println!("|            ");
@@ -187,11 +190,9 @@ fn print_hangman(gd: &GameData)
             println!("|        /|\\ ");
             println!("|        / \\ ");
             println!("|        ||| ");
-
         }
 
-        4 =>
-        {
+        4 => {
             println!(" _________   ");
             println!("|            ");
             println!("|            ");
@@ -201,8 +202,7 @@ fn print_hangman(gd: &GameData)
             println!("|        / \\ ");
         }
 
-        _ =>
-        {
+        _ => {
             println!("             ");
             println!("             ");
             println!("             ");
@@ -214,7 +214,6 @@ fn print_hangman(gd: &GameData)
     }
 }
 
-
 fn clear() {
-    print!("{}c",27 as char);
+    print!("{}c", 27 as char);
 }
